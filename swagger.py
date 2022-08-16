@@ -19,4 +19,4 @@ api.add_namespace(Todo, '/image-position')
 
 if __name__ == '__main__':
     # 코드 수정 시 반영
-    app.run(debug=True, port=80)
+    app.run(debug=True, host='0.0.0.0',port=5000)

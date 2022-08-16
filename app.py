@@ -4,6 +4,8 @@ import cv2
 from flask import Flask, request
 import requests
 import numpy as np
+import urllib.request
+import re
 
 # Flask 객체 인스턴스
 app = Flask(__name__)
@@ -28,7 +30,10 @@ class OpenCV():
     # Image center값 반환 메소드
     def detectImage(self, screenshotPath,detectImagePath):
         
+        
         # http 경우 URL 변환 메소드로 image처리
+        # regex = re.compile('^http')
+        
         if "http" in screenshotPath or detectImagePath:
             if "http" in screenshotPath and detectImagePath:
                 sourceimage = self.getUrlImage(screenshotPath)
@@ -39,8 +44,9 @@ class OpenCV():
             else:
                 sourceimage = cv2.imread(screenshotPath,0)
                 template = self.getUrlImage(detectImagePath)
-        
-        # 일반적인 경우
+        # python url 정규식 사용
+        # url error test해보기
+        # 일반적인 경우(.png, .jpg ...)
         else:
             # imread : img 경로를 읽어와 3차원 행렬로 return 
             sourceimage = cv2.imread(screenshotPath,0)
@@ -49,15 +55,18 @@ class OpenCV():
             # Image값이 존재하지 않을 때 (-1, -1) 반환
             if type(sourceimage) == NoneType or type(template) == NoneType:
                 return (-1,-1)
-
+        
         # 찾을 이미지의 가로, 세로 너비 할당
-        w, h=template.shape[::-1]       # 설
+        # 흑백 이미지의 경우 height, width를 받아옴. color는 channel(BGR)값까지
+        # imread를 사용하면 거꾸로 값을 받아옴, 따라서 뒤에서부터 값 할당
+        w, h=template.shape[::-1]
 
         # 흑백처리 메소드
-        # 문자열로 받은 매개변수를 실행하는 함수
+        # 문자열로 받은 매개변수를 실행하는 함수, 가장 성능이 뛰어남(연산이 복잡).
         method = eval('cv2.TM_CCOEFF_NORMED')
         
         # 찾는이미지의 좌표값, 가중치 반환 메소드
+        # 원본 이미지와 찾는 이미지의 매칭 위치탐색
         # 행렬로 res에 값 저장
         res = cv2.matchTemplate(sourceimage, template, method) 
 

@@ -12,9 +12,9 @@ Todo = Namespace(
 )
 
 # 입력값 model
-todo_fields = Todo.model('detectImage', {  
-    'screenshotPath': fields.String(description='URL or ImagePath', required=True, example="https://screenshot.com/11.png"),
-    'detectImagePath': fields.String(description='URL or ImagePath', required=True, example="https://detectImage/11.png")
+todo_fields = Todo.model('detectImgPath', {  
+    'baseImgPath': fields.String(description='URL or ImagePath', required=True, example="https://screenshot.com/11.png"),
+    'detectImgPath': fields.String(description='URL or ImagePath', required=True, example="https://detectImage/11.png")
 })
 
 # 성공 model
@@ -39,4 +39,4 @@ class TodoPost(Resource):
     @Todo.response(200, 'Success', todo_fields_success)
     @Todo.response(201, 'Value None', todo_fields_value_none)
     def post(self):
-        """screenshotPath와 detectImagePath입력받아 Center 좌표를 반환합니다."""
+        """baseImgPath detectImgPath Center 좌표를 반환합니다."""
