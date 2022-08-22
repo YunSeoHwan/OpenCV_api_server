@@ -4,11 +4,21 @@ import cv2
 from flask import Flask, request
 import requests
 import numpy as np
-import urllib.request
 import re
+from flask_restx import Api
+from todo import Todo
 
 # Flask 객체 인스턴스
 app = Flask(__name__)
+
+
+api = Api(
+    app,
+    title="OpenCV API Server",
+    description="screenshotPath와 detectImagePath를 입력받아 detectImagePath image의 Center 좌표를 반환해줍니다.",
+    terms_url="http://127.0.0.1:5000/image-position",
+    license="License : MIT"
+)
 
 # Image변환 Class
 class OpenCV():
@@ -29,32 +39,42 @@ class OpenCV():
 
     # Image center값 반환 메소드
     def detectImage(self, screenshotPath,detectImagePath):
-        
-        
-        # http 경우 URL 변환 메소드로 image처리
-        # regex = re.compile('^http')
-        
-        if "http" in screenshotPath or detectImagePath:
-            if "http" in screenshotPath and detectImagePath:
-                sourceimage = self.getUrlImage(screenshotPath)
-                template = self.getUrlImage(detectImagePath)
-            elif "http" in screenshotPath:
-                sourceimage = self.getUrlImage(screenshotPath)
-                template = cv2.imread(detectImagePath,0)
-            else:
-                sourceimage = cv2.imread(screenshotPath,0)
-                template = self.getUrlImage(detectImagePath)
+        # URL 정규식 표현
+        p = re.compile('^(https?://)[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/[a-zA-Z0-9-_/.?=]*')
+
+        # URL 주소 에러가 발생시 
+        if (p.match(screenshotPath)!= None) == False or (p.match(detectImagePath)!= None) == False:
+            if p.match(screenshotPath) == None and p.match(detectImagePath) == None:
+                return "3"
+            elif p.match(screenshotPath) == None:
+                return "1"
+            elif p.match(detectImagePath) == None:
+                return "2"
+
+        else:
+            sourceimage = self.getUrlImage(screenshotPath)
+            template = self.getUrlImage(detectImagePath)
+
+        # if "http" in screenshotPath or detectImagePath:
+        #     if "http" in screenshotPath and detectImagePath:
+        #         sourceimage = self.getUrlImage(screenshotPath)
+        #         template = self.getUrlImage(detectImagePath)
+        #     elif "http" in screenshotPath:
+        #         sourceimage = self.getUrlImage(screenshotPath)
+        #         template = cv2.imread(detectImagePath,0)
+        #     else:
+        #         sourceimage = cv2.imread(screenshotPath,0)
+        #         template = self.getUrlImage(detectImagePath)
         # python url 정규식 사용
         # url error test해보기
         # 일반적인 경우(.png, .jpg ...)
-        else:
-            # imread : img 경로를 읽어와 3차원 행렬로 return 
-            sourceimage = cv2.imread(screenshotPath,0)
-            template = cv2.imread(detectImagePath,0)
-
-            # Image값이 존재하지 않을 때 (-1, -1) 반환
-            if type(sourceimage) == NoneType or type(template) == NoneType:
-                return (-1,-1)
+        # else:
+        #     # imread : img 경로를 읽어와 3차원 행렬로 return 
+        #     sourceimage = cv2.imread(screenshotPath, 0)
+        #     template = cv2.imread(detectImagePath, 0)
+        #     # Image값이 존재하지 않을 때 (-1, -1) 반환
+        #     if type(sourceimage) == NoneType or type(template) == NoneType:
+        #         return (-1,-1)
         
         # 찾을 이미지의 가로, 세로 너비 할당
         # 흑백 이미지의 경우 height, width를 받아옴. color는 channel(BGR)값까지
@@ -98,20 +118,42 @@ def image_position():
     # status
     if center[0] == -1 and center[1] == -1:
         # 입력값 없을 시 201 표시
-        stats = 201
+        stats = 204
+        contents = "Image is None."
+
+    elif center == "1":
+        stats = 404
+        contents = "screenshotPath is Error"
+
+    elif center == "2":
+        stats = 404
+        contents = "detectImagePath is Error"
+
+    elif center == "3":
+        stats = 404
+        contents = "All path Error"
+                
+        
     else:
-        stats = 200
+        stats = 201
+        contents = "Success"
     # 반환 형식
-    output={
-        "status": stats,
-        "data" : {
-            'x':center[0],
-            'y':center[1]
+    if type(center) is tuple:
+        output={
+            "status": stats,
+            "data" : {
+                'x':center[0],
+                'y':center[1]
+            }
         }
-    }
+    else:
+        output={
+            "status": stats,
+            "contents": contents,
+        }        
 
     return(output)
-
+api.add_namespace(Todo, '/image-position')
 if __name__ == '__main__':
     # 코드 수정 시 반영
     app.run(debug=True)
