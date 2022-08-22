@@ -1,5 +1,4 @@
 from types import NoneType
-# OpenCV
 import cv2
 from flask import Flask, request
 import requests
@@ -10,7 +9,6 @@ from todo import Todo
 
 # Flask 객체 인스턴스
 app = Flask(__name__)
-
 
 api = Api(
     app,
@@ -40,41 +38,32 @@ class OpenCV():
     # Image center값 반환 메소드
     def detectImage(self, screenshotPath,detectImagePath):
         # URL 정규식 표현
-        p = re.compile('^(https?://)[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/[a-zA-Z0-9-_/.?=]*')
+        url = re.compile('^(https?://)[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/[a-zA-Z0-9-_/.?=]*')
 
-        # URL 주소 에러가 발생시 
-        if (p.match(screenshotPath)!= None) == False or (p.match(detectImagePath)!= None) == False:
-            if p.match(screenshotPath) == None and p.match(detectImagePath) == None:
+        # URL 주소 에러가 발생시 예외처리
+        if (url.match(screenshotPath)!= None) == False or (url.match(detectImagePath)!= None) == False:
+
+            # 각각의 경우 대한 처리
+            if url.match(screenshotPath) == None and url.match(detectImagePath) == None:
                 return "3"
-            elif p.match(screenshotPath) == None:
+            elif url.match(screenshotPath) == None:
                 return "1"
-            elif p.match(detectImagePath) == None:
+            elif url.match(detectImagePath) == None:
                 return "2"
-
-        else:
+        elif url.match(screenshotPath)!= None and url.match(detectImagePath)!= None:
             sourceimage = self.getUrlImage(screenshotPath)
             template = self.getUrlImage(detectImagePath)
-
-        # if "http" in screenshotPath or detectImagePath:
-        #     if "http" in screenshotPath and detectImagePath:
-        #         sourceimage = self.getUrlImage(screenshotPath)
-        #         template = self.getUrlImage(detectImagePath)
-        #     elif "http" in screenshotPath:
-        #         sourceimage = self.getUrlImage(screenshotPath)
-        #         template = cv2.imread(detectImagePath,0)
-        #     else:
-        #         sourceimage = cv2.imread(screenshotPath,0)
-        #         template = self.getUrlImage(detectImagePath)
+            
         # python url 정규식 사용
         # url error test해보기
         # 일반적인 경우(.png, .jpg ...)
-        # else:
-        #     # imread : img 경로를 읽어와 3차원 행렬로 return 
-        #     sourceimage = cv2.imread(screenshotPath, 0)
-        #     template = cv2.imread(detectImagePath, 0)
-        #     # Image값이 존재하지 않을 때 (-1, -1) 반환
-        #     if type(sourceimage) == NoneType or type(template) == NoneType:
-        #         return (-1,-1)
+        else:
+            # imread : img 경로를 읽어와 3차원 행렬로 return 
+            sourceimage = cv2.imread(screenshotPath, 0)
+            template = cv2.imread(detectImagePath, 0)
+            # Image값이 존재하지 않을 때 (-1, -1) 반환
+            if type(sourceimage) == NoneType or type(template) == NoneType:
+                return (-1,-1)
         
         # 찾을 이미지의 가로, 세로 너비 할당
         # 흑백 이미지의 경우 height, width를 받아옴. color는 channel(BGR)값까지
@@ -123,7 +112,7 @@ def image_position():
 
     elif center == "1":
         stats = 404
-        contents = "screenshotPath is Error"
+        contents = "baseImgPath is Error"
 
     elif center == "2":
         stats = 404
@@ -138,6 +127,7 @@ def image_position():
         stats = 201
         contents = "Success"
     # 반환 형식
+    # 정상처리 경우
     if type(center) is tuple:
         output={
             "status": stats,
@@ -146,6 +136,8 @@ def image_position():
                 'y':center[1]
             }
         }
+
+    # 예외경우
     else:
         output={
             "status": stats,
