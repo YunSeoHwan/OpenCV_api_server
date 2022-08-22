@@ -8,6 +8,7 @@ from flask_restx import Api
 from todo import Todo
 
 # Flask 객체 인스턴스
+
 app = Flask(__name__)
 
 api = Api(
@@ -42,7 +43,6 @@ class OpenCV():
 
         # URL 주소 에러가 발생시 예외처리
         if (url.match(screenshotPath)!= None) == False or (url.match(detectImagePath)!= None) == False:
-
             # 각각의 경우 대한 처리
             if url.match(screenshotPath) == None and url.match(detectImagePath) == None:
                 return "3"
@@ -90,10 +90,13 @@ class OpenCV():
 
         return center
 
+# @app.errorhandler(404)
+# def handle(_error):
+#     return make_response(jsonify({'error' : 'Not found'}), 500)
 # POST Server
 @app.route('/image-position', methods=['POST'])
 def image_position():
-
+    
     # json으로 request
     json = request.json
 
@@ -106,27 +109,28 @@ def image_position():
 
     # status
     if center[0] == -1 and center[1] == -1:
-        # 입력값 없을 시 201 표시
-        stats = 204
-        contents = "Image is None."
+        # 입력값 없을 시 204 표시
+        stats = 404
+        error = "Image is None."
 
     elif center == "1":
         stats = 404
-        contents = "baseImgPath is Error"
+        error = "baseImgPath is Error"
 
     elif center == "2":
         stats = 404
-        contents = "detectImagePath is Error"
+        error = "detectImagePath is Error"
 
     elif center == "3":
         stats = 404
-        contents = "All path Error"
+        error = "All path Error"
                 
         
     else:
         stats = 201
-        contents = "Success"
+        error = "Success"
     # 반환 형식
+
     # 정상처리 경우
     if type(center) is tuple:
         output={
@@ -141,7 +145,8 @@ def image_position():
     else:
         output={
             "status": stats,
-            "contents": contents,
+            "error": error,
+            
         }        
 
     return(output)
