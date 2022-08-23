@@ -40,30 +40,32 @@ class OpenCV():
     def detectImage(self, screenshotPath,detectImagePath):
         # URL 정규식 표현
         url = re.compile('^(https?://)[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/[a-zA-Z0-9-_/.?=]*')
-
         # URL 주소 에러가 발생시 예외처리
-        if (url.match(screenshotPath)!= None) == False or (url.match(detectImagePath)!= None) == False:
-            # 각각의 경우 대한 처리
-            if url.match(screenshotPath) == None and url.match(detectImagePath) == None:
-                return "3"
-            elif url.match(screenshotPath) == None:
-                return "1"
-            elif url.match(detectImagePath) == None:
-                return "2"
-        elif url.match(screenshotPath)!= None and url.match(detectImagePath)!= None:
-            sourceimage = self.getUrlImage(screenshotPath)
-            template = self.getUrlImage(detectImagePath)
-            
-        # python url 정규식 사용
-        # url error test해보기
-        # 일반적인 경우(.png, .jpg ...)
-        else:
-            # imread : img 경로를 읽어와 3차원 행렬로 return 
-            sourceimage = cv2.imread(screenshotPath, 0)
-            template = cv2.imread(detectImagePath, 0)
-            # Image값이 존재하지 않을 때 (-1, -1) 반환
-            if type(sourceimage) == NoneType or type(template) == NoneType:
-                return (-1,-1)
+        try:
+            if (url.match(screenshotPath) == None) == True or (url.match(detectImagePath) == None) == True:
+                # 각각의 경우 대한 처리
+                if url.match(screenshotPath) == None and url.match(detectImagePath) == None:
+                    return "3"
+                elif url.match(screenshotPath) == None:
+                    return "1"
+                elif url.match(detectImagePath) == None:
+                    return "2"
+            elif url.match(screenshotPath)!= None and url.match(detectImagePath)!= None:
+                sourceimage = self.getUrlImage(screenshotPath)
+                template = self.getUrlImage(detectImagePath)
+                
+            # python url 정규식 사용
+            # url error test해보기
+            # 일반적인 경우(.png, .jpg ...)
+            else:
+                # imread : img 경로를 읽어와 3차원 행렬로 return 
+                sourceimage = cv2.imread(screenshotPath, 0)
+                template = cv2.imread(detectImagePath, 0)
+                # Image값이 존재하지 않을 때 (-1, -1) 반환
+                if type(sourceimage) == NoneType or type(template) == NoneType:
+                    return (-1,-1)
+        except Exception as e:
+            return e
         
         # 찾을 이미지의 가로, 세로 너비 할당
         # 흑백 이미지의 경우 height, width를 받아옴. color는 channel(BGR)값까지
@@ -90,9 +92,9 @@ class OpenCV():
 
         return center
 
-@app.errorhandler(500)
-def handle(_error):
-    return make_response(jsonify({'error' : 'Not found'}), 500)
+# @app.errorhandler(500)
+# def handle(_error):
+#     return make_response(jsonify({'error' : 'Not found'}), 500)
 # POST Server
 @app.route('/image-position', methods=['POST'])
 def image_position():
@@ -110,25 +112,26 @@ def image_position():
     # status
     if center[0] == -1 and center[1] == -1:
         # 입력값 없을 시 204 표시
-        stats = 404
+        msg = "Check your image"
         error = "Image is None."
 
     elif center == "1":
-        stats = 404
+        msg = "Check your baseImgPath"
         error = "baseImgPath is Error"
 
     elif center == "2":
-        stats = 404
+        msg = "Check your detectImagePath"
         error = "detectImagePath is Error"
 
     elif center == "3":
-        stats = 404
+        msg = "Check your All image"
         error = "All path Error"
                 
+    elif type(center) is not str and type(center) is not tuple:
+        return make_response(jsonify({'error' : center}), 500)
         
     else:
-        stats = 201
-        error = "Success"
+        stats = "Success"
     # 반환 형식
 
     # 정상처리 경우
@@ -145,7 +148,7 @@ def image_position():
     # 예외경우
     else:
         output={
-            "status": stats,
+            "message": msg,
             "error": error,
             
         }
