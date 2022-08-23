@@ -15,7 +15,7 @@
 * baseImgPath에 원본 이미지, detectImgPath에 찾고자 하는 이미지 설정 후, 실행
 
 <p align="center">
-GIF Images
+<img width="1079" alt="ex1" src="https://user-images.githubusercontent.com/48356954/186043737-403dbb25-b38f-4a63-8276-663b447a9fe7.PNG">
 </p>
 
 <br>
