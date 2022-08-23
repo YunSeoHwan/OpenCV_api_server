@@ -1,6 +1,6 @@
 from types import NoneType
 import cv2
-from flask import Flask, request
+from flask import Flask, request, make_response, jsonify
 import requests
 import numpy as np
 import re
@@ -90,9 +90,9 @@ class OpenCV():
 
         return center
 
-# @app.errorhandler(404)
-# def handle(_error):
-#     return make_response(jsonify({'error' : 'Not found'}), 500)
+@app.errorhandler(500)
+def handle(_error):
+    return make_response(jsonify({'error' : 'Not found'}), 500)
 # POST Server
 @app.route('/image-position', methods=['POST'])
 def image_position():
@@ -140,6 +140,7 @@ def image_position():
                 'y':center[1]
             }
         }
+        return output
 
     # 예외경우
     else:
@@ -147,9 +148,10 @@ def image_position():
             "status": stats,
             "error": error,
             
-        }        
+        }
+        return make_response(jsonify(output), 400)       
 
-    return(output)
+    # return(output)
 api.add_namespace(Todo, '/image-position')
 if __name__ == '__main__':
     # 코드 수정 시 반영
