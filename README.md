@@ -20,7 +20,7 @@
 
 <br>
 <p align="center">
-  <img width="979" alt="ex2" src="https://user-images.githubusercontent.com/48356954/186044695-0cde87c2-7505-45c2-967e-ad89425c5866.PNG">
+  <img width="972" alt="ex3" src="https://user-images.githubusercontent.com/48356954/186054257-27ed95c3-fbed-45c3-afb5-28a5c0bbd733.PNG">
 </p>
 
 <br>
