@@ -15,7 +15,12 @@
 * baseImgPath에 원본 이미지, detectImgPath에 찾고자 하는 이미지 설정 후, 실행
 
 <p align="center">
-<img width="1079" alt="ex1" src="https://user-images.githubusercontent.com/48356954/186043737-403dbb25-b38f-4a63-8276-663b447a9fe7.PNG">
+  <img width="977" alt="ex1" src="https://user-images.githubusercontent.com/48356954/186044670-867f5790-1b30-4da6-a832-7edea34bcd5b.PNG">
+</p>
+
+<br>
+<p align="center">
+  <img width="979" alt="ex2" src="https://user-images.githubusercontent.com/48356954/186044695-0cde87c2-7505-45c2-967e-ad89425c5866.PNG">
 </p>
 
 <br>
