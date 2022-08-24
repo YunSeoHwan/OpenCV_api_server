@@ -1,4 +1,5 @@
 from types import NoneType
+import ftplib
 import cv2
 from flask import Flask, request, make_response, jsonify
 import requests
@@ -17,6 +18,39 @@ api = Api(
     terms_url="http://127.0.0.1:5000/image-position",
     license="License : MIT"
 )
+
+# FTP Server download
+host = 'localhost'
+port = 2121
+user = 'zzz'
+pwd = '555'
+
+# ftp 객체 생성
+ftp = ftplib.FTP(timeout=30)
+
+# 서버 접속
+ftp.connect(host, port)
+ftp.login(user, pwd)
+
+# BaseImage 다운
+ftp.cwd("image/BaseImage")
+list = ftp.nlst()
+
+for file in list:
+    with open(r'C:\Users\User\OneDrive\바탕 화면\CLOUDXPM-imageDetectAPI\image\BaseImage\{}'.format(file), 'wb') as f:
+        r = ftp.retrbinary(f"RETR {file}", f.write)
+
+# DetectImage 다운
+# 상위 경로이동 후, 경로이동
+ftp.cwd("/")
+ftp.cwd("image/DetectImage")
+
+list = ftp.nlst()
+for file in list:
+    with open(r'C:\Users\User\OneDrive\바탕 화면\CLOUDXPM-imageDetectAPI\image\DetectImage\{}'.format(file), 'wb') as f:
+        r = ftp.retrbinary(f"RETR {file}", f.write)
+# 파일 닫기
+ftp.close()
 
 # Image변환 Class
 class OpenCV():
@@ -94,7 +128,7 @@ class OpenCV():
             center = ((top_left[0] + int(w/2))/2, (top_left[1] + int(h/2))/2)
 
             return center
-            
+
         # 예외처리
         except requests.exceptions.ConnectionError:
             return "4"
@@ -158,7 +192,7 @@ def image_position():
     else:
         output={
             "message": msg,
-            "error": error,
+            "error": error
         }
         return make_response(jsonify(output), 400)       
 
