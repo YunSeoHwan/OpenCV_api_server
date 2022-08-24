@@ -1,7 +1,4 @@
-from doctest import Example
-from flask import request
 from flask_restx import Resource, Namespace, fields
-
 
 todos = {}
 count = 1
@@ -35,8 +32,16 @@ todo_fields_value_none = Todo.model('value_none_output',{
 
 # url error model
 todo_fields_url_error = Todo.model('url_error_output',{
-    "status": fields.Integer(description="404",required=True, example="404"),
-    "contents": fields.String(description="Error name", required=True, example="detectImagePath is Error")
+    "message": fields.Integer(description="400",required=True),
+    "Error": fields.String(description="Error name", required=True,example="Error name")
+})
+
+todo_fields_cv2_error = Todo.model('cv2_error_output',{
+    "cv2.Error": fields.String(description="Check your URL", required=True, example="Check your URL")
+})
+
+todo_fields_connect_error = Todo.model('Connect_error_output',{
+    "ConnectionError": fields.String(description="Check your URL", example="Check your URL", required=True)
 })
 
 # swagger domain
@@ -45,7 +50,9 @@ class TodoPost(Resource):
     @Todo.expect(todo_fields)
     @Todo.response(201, 'Success', todo_fields_success)
     @Todo.response(204, 'Value None', todo_fields_value_none)
-    @Todo.response(404, 'URL Error', todo_fields_url_error)
+    @Todo.response(400, 'URL Error', todo_fields_url_error)
+    @Todo.response(404, 'Connect Error', todo_fields_connect_error)
+    @Todo.response(500, 'CV2 Error', todo_fields_cv2_error) 
 
     def post(self):
         """baseImgPath detectImgPath Center 좌표를 반환합니다."""
