@@ -54,7 +54,22 @@ ftp.close()
 
 # Image변환 Class
 class OpenCV():
+    def check_input(self, input):
+        # URL 정규식 표현
+        url = re.compile('^(https?://)[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/[a-zA-Z0-9-_/.?=]*')
+    
+        # FTP 정규식
+        ftp = re.compile('^(ftp://)')
 
+        # 사진, url 체크
+        if url.match(input) != None:
+            return "http"
+        
+        elif ftp.match(input) != None:
+            return "ftp"
+        else:
+            return "img"
+        
     # URL -> image 변환 메소드
     def getUrlImage(self, url):
 
@@ -71,38 +86,31 @@ class OpenCV():
 
     # Image center값 반환 메소드
     def detectImage(self, screenshotPath,detectImagePath):
-        # URL 정규식 표현
-        url = re.compile('^(https?://)[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/[a-zA-Z0-9-_/.?=]*')
+        sourceimage = self.check_input(screenshotPath)
+        template = self.check_input(detectImagePath)
 
-        # URL, 내장img 구별 정규식
-        check_url = re.compile('^(https?://)')
-           
-        # URL 주소 에러가 발생시 예외처리
+        # 각 경우에 대한 예외처리
         try:
-            if check_url.match(screenshotPath) != None or check_url.match(detectImagePath) != None:
-                if (url.match(screenshotPath) == None) == True or (url.match(detectImagePath) == None) == True:
+            if sourceimage == "http":
+                sourceimage = self.getUrlImage(screenshotPath)
 
-                    # 각각의 경우 대한 처리
-                    if url.match(screenshotPath) == None and url.match(detectImagePath) == None:
-                        return "3"
-                    elif url.match(screenshotPath) == None:
-                        return "1"
-                    elif url.match(detectImagePath) == None:
-                        return "2"
-
-                # 정상 URL의 경우
-                elif url.match(screenshotPath)!= None and url.match(detectImagePath)!= None:
-                    sourceimage = self.getUrlImage(screenshotPath)
-                    template = self.getUrlImage(detectImagePath)
-            
-            # 일반적인 경우(.png, .jpg ...)
-            else:
-                # imread : img 경로를 읽어와 3차원 행렬로 return 
+            elif sourceimage == "img":
                 sourceimage = cv2.imread(screenshotPath, 0)
+
+                if type(sourceimage) == NoneType:
+                    return "1"
+
+            elif sourceimage == "ftp":
+                return "9"
+            
+            if template == "http":
+                template = self.getUrlImage(detectImagePath)
+
+            elif template == "img":
                 template = cv2.imread(detectImagePath, 0)
-                # Image값이 존재하지 않을 때 (-1, -1) 반환
-                if type(sourceimage) == NoneType or type(template) == NoneType:
-                    return "6"
+
+                if type(template) == NoneType:
+                    return "2"
         
             # 찾을 이미지의 가로, 세로 너비 할당
             # 흑백 이미지의 경우 height, width를 받아옴. color는 channel(BGR)값까지
@@ -158,10 +166,6 @@ def image_position():
     elif center == "2":
         msg = "Check your detectImagePath"
         error = "detectImagePath is Error"
-
-    elif center == "3":
-        msg = "Check your All image"
-        error = "All path Error"
                 
     elif center == "4":
         return make_response(jsonify({'ConnectionError' : 'Check your url'}), 404)
