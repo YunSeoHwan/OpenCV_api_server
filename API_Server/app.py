@@ -19,39 +19,6 @@ api = Api(
     license="License : MIT"
 )
 
-# FTP Server download
-host = 'localhost'
-port = 2121
-user = 'zzz'
-pwd = '555'
-
-# ftp 객체 생성
-ftp = ftplib.FTP(timeout=30)
-
-# 서버 접속
-ftp.connect(host, port)
-ftp.login(user, pwd)
-
-# BaseImage 다운
-ftp.cwd("image/BaseImage")
-list = ftp.nlst()
-
-for file in list:
-    with open(r'C:\Users\User\OneDrive\바탕 화면\CLOUDXPM-imageDetectAPI\image\BaseImage\{}'.format(file), 'wb') as f:
-        r = ftp.retrbinary(f"RETR {file}", f.write)
-
-# DetectImage 다운
-# 상위 경로이동 후, 경로이동
-ftp.cwd("/")
-ftp.cwd("image/DetectImage")
-
-list = ftp.nlst()
-for file in list:
-    with open(r'C:\Users\User\OneDrive\바탕 화면\CLOUDXPM-imageDetectAPI\image\DetectImage\{}'.format(file), 'wb') as f:
-        r = ftp.retrbinary(f"RETR {file}", f.write)
-# 파일 닫기
-ftp.close()
-
 # Image변환 Class
 class OpenCV():
     def check_input(self, input):
@@ -69,7 +36,55 @@ class OpenCV():
             return "ftp"
         else:
             return "img"
+
+    # FTP Server 다운 메소드
+    def ftp_server_down(self, ftp_url):
+
+        # 정규식
+        f = "\w+"
+
+        # ftp url 분리
+        ftp_list = re.findall(f, ftp_url)
+        user = ftp_list[1]
+        pwd = ftp_list[2]
+        host = ftp_list[3] +"."+ ftp_list[4] +"."+ ftp_list[5] +"."+ ftp_list[6]
+        port = int(ftp_list[7])
+        path = ftp_list[8:]
+        real_path = ""
+
+        for i in range(len(path)):
+            real_path = real_path + "/" + path[i]
         
+        ftp = ftplib.FTP(timeout=30)
+
+        # 서버 접속
+        ftp.connect(host, port)
+        ftp.login(user, pwd)
+
+        # BaseImage 다운
+        if "BaseImage" in real_path:
+            ftp.cwd(real_path)
+            list = ftp.nlst()
+
+            for file in list:
+                with open(r'C:\CLOUDXPM-imageDetectAPI\API_Server\image\BaseImage\{}'.format(file), 'wb') as f:
+                    r = ftp.retrbinary(f"RETR {file}", f.write)
+            
+            # 파일 닫기
+            ftp.close()
+            
+        # DetectImage 다운
+        elif "DetectImage" in real_path:
+            ftp.cwd(real_path)
+
+            list = ftp.nlst()
+            for file in list:
+                with open(r'C:\CLOUDXPM-imageDetectAPI\API_Server\image\DetectImage\{}'.format(file), 'wb') as f:
+                    r = ftp.retrbinary(f"RETR {file}", f.write)
+
+            # 파일 닫기
+            ftp.close()
+
     # URL -> image 변환 메소드
     def getUrlImage(self, url):
 
@@ -85,7 +100,7 @@ class OpenCV():
         return image
 
     # Image center값 반환 메소드
-    def detectImage(self, screenshotPath,detectImagePath):
+    def detectImage(self, screenshotPath, detectImagePath):
         sourceimage = self.check_input(screenshotPath)
         template = self.check_input(detectImagePath)
 
@@ -101,7 +116,8 @@ class OpenCV():
                     return "1"
 
             elif sourceimage == "ftp":
-                return "9"
+                self.ftp_server_down(screenshotPath)
+                sourceimage = cv2.imread("C:/CLOUDXPM-imageDetectAPI/API_Server/image/BaseImage/a.PNG", 0)
             
             if template == "http":
                 template = self.getUrlImage(detectImagePath)
@@ -111,7 +127,11 @@ class OpenCV():
 
                 if type(template) == NoneType:
                     return "2"
-        
+
+            elif template == "ftp":
+                self.ftp_server_down(detectImagePath)
+                template = cv2.imread("C:/CLOUDXPM-imageDetectAPI/API_Server/image/DetectImage/bb.PNG", 0)       
+
             # 찾을 이미지의 가로, 세로 너비 할당
             # 흑백 이미지의 경우 height, width를 받아옴. color는 channel(BGR)값까지
             # imread를 사용하면 거꾸로 값을 받아옴, 따라서 뒤에서부터 값 할당
