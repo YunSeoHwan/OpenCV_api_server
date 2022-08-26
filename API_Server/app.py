@@ -57,34 +57,40 @@ class OpenCV():
         
         ftp = ftplib.FTP(timeout=30)
 
-        # 서버 접속
-        ftp.connect(host, port)
-        ftp.login(user, pwd)
+        # 서버 접속 예외처리
+        try:
+            ftp.connect(host, port)
+            ftp.login(user, pwd)
 
         # BaseImage 다운
-        if "BaseImage" in real_path:
-            ftp.cwd(real_path)
-            list = ftp.nlst()
+            if "BaseImage" in real_path:
+                ftp.cwd(real_path)
+                list = ftp.nlst()
 
-            for file in list:
-                with open(r'C:\CLOUDXPM-imageDetectAPI\API_Server\image\BaseImage\{}'.format(file), 'wb') as f:
-                    r = ftp.retrbinary(f"RETR {file}", f.write)
-            
-            # 파일 닫기
-            ftp.close()
-            
-        # DetectImage 다운
-        elif "DetectImage" in real_path:
-            ftp.cwd(real_path)
+                for file in list:
+                    with open(r'C:\CLOUDXPM-imageDetectAPI\API_Server\image\BaseImage\{}'.format(file), 'wb') as f:
+                        r = ftp.retrbinary(f"RETR {file}", f.write)
+                
+                # 파일 닫기
+                ftp.close()
+                
+            # DetectImage 다운
+            elif "DetectImage" in real_path:
+                ftp.cwd(real_path)
 
-            list = ftp.nlst()
-            for file in list:
-                with open(r'C:\CLOUDXPM-imageDetectAPI\API_Server\image\DetectImage\{}'.format(file), 'wb') as f:
-                    r = ftp.retrbinary(f"RETR {file}", f.write)
+                list = ftp.nlst()
+                for file in list:
+                    with open(r'C:\CLOUDXPM-imageDetectAPI\API_Server\image\DetectImage\{}'.format(file), 'wb') as f:
+                        r = ftp.retrbinary(f"RETR {file}", f.write)
 
-            # 파일 닫기
-            ftp.close()
+                # 파일 닫기
+                ftp.close()
 
+        except ConnectionRefusedError:
+            return "4"     
+
+        except ftplib.error_perm:
+            return "6"   
     # URL -> image 변환 메소드
     def getUrlImage(self, url):
 
@@ -116,8 +122,15 @@ class OpenCV():
                     return "1"
 
             elif sourceimage == "ftp":
-                self.ftp_server_down(screenshotPath)
-                sourceimage = cv2.imread("C:/CLOUDXPM-imageDetectAPI/API_Server/image/BaseImage/a.PNG", 0)
+                f = self.ftp_server_down(screenshotPath)
+                if f == "4":
+                    return "4"
+
+                elif f == "6":
+                    return "6"    
+
+                else:
+                    sourceimage = cv2.imread("C:/CLOUDXPM-imageDetectAPI/API_Server/image/BaseImage/a.PNG", 0)
             
             if template == "http":
                 template = self.getUrlImage(detectImagePath)
@@ -129,8 +142,15 @@ class OpenCV():
                     return "2"
 
             elif template == "ftp":
-                self.ftp_server_down(detectImagePath)
-                template = cv2.imread("C:/CLOUDXPM-imageDetectAPI/API_Server/image/DetectImage/bb.PNG", 0)       
+                f = self.ftp_server_down(detectImagePath)
+                if f == "4":
+                    return "4"
+
+                elif f == "6":
+                    return "6"
+
+                else:
+                    template = cv2.imread("C:/CLOUDXPM-imageDetectAPI/API_Server/image/DetectImage/bb.PNG", 0)       
 
             # 찾을 이미지의 가로, 세로 너비 할당
             # 흑백 이미지의 경우 height, width를 받아옴. color는 channel(BGR)값까지
@@ -158,11 +178,16 @@ class OpenCV():
             return center
 
         # 예외처리
+        except AttributeError:
+            return "3"
+
         except requests.exceptions.ConnectionError:
             return "4"
 
         except cv2.error:
             return "5"
+        
+        
 
 # POST Server
 @app.route('/image-position', methods=['POST'])
@@ -186,7 +211,10 @@ def image_position():
     elif center == "2":
         msg = "Check your detectImagePath"
         error = "detectImagePath is Error"
-                
+
+    elif center == "3":
+        return make_response(jsonify({'AttributeError' : 'Check your url'}), 500)            
+
     elif center == "4":
         return make_response(jsonify({'ConnectionError' : 'Check your url'}), 404)
 
@@ -194,8 +222,7 @@ def image_position():
         return make_response(jsonify({'cv2.error' : 'Check your url'}), 500)
 
     elif center == "6":
-        msg = "Check your image"
-        error = "Image is None."
+        return make_response(jsonify({'FTP_Path_Error' : 'Check your FTP_path'}), 500)
 
     else:
         stats = "Success"
