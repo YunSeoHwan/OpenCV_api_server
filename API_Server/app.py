@@ -187,8 +187,6 @@ class OpenCV():
         except cv2.error:
             return "5"
         
-        
-
 # POST Server
 @app.route('/image-position', methods=['POST'])
 def image_position():
