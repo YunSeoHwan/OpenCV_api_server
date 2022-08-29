@@ -42,19 +42,21 @@ class OpenCV():
 
         # 정규식
         f = "\w+"
-
+        
         # ftp url 분리
         ftp_list = re.findall(f, ftp_url)
         user = ftp_list[1]
         pwd = ftp_list[2]
         host = ftp_list[3] +"."+ ftp_list[4] +"."+ ftp_list[5] +"."+ ftp_list[6]
         port = int(ftp_list[7])
-        path = ftp_list[8:]
+        path = ftp_list[8:len(ftp_list)-2]
         real_path = ""
+        img = ftp_list[-2:]
+        real_img = img[0] + "." + img[1]
 
         for i in range(len(path)):
             real_path = real_path + "/" + path[i]
-        
+
         ftp = ftplib.FTP(timeout=30)
 
         # 서버 접속 예외처리
@@ -68,8 +70,9 @@ class OpenCV():
                 list = ftp.nlst()
 
                 for file in list:
-                    with open(r'C:\CLOUDXPM-imageDetectAPI\API_Server\image\BaseImage\{}'.format(file), 'wb') as f:
-                        r = ftp.retrbinary(f"RETR {file}", f.write)
+                    if file == real_img:
+                        with open(r'C:\CLOUDXPM-imageDetectAPI\API_Server\image\BaseImage\{}'.format(file), 'wb') as f:
+                            r = ftp.retrbinary(f"RETR {file}", f.write)
                 
                 # 파일 닫기
                 ftp.close()
@@ -80,8 +83,9 @@ class OpenCV():
 
                 list = ftp.nlst()
                 for file in list:
-                    with open(r'C:\CLOUDXPM-imageDetectAPI\API_Server\image\DetectImage\{}'.format(file), 'wb') as f:
-                        r = ftp.retrbinary(f"RETR {file}", f.write)
+                    if file == real_img:
+                        with open(r'C:\CLOUDXPM-imageDetectAPI\API_Server\image\DetectImage\{}'.format(file), 'wb') as f:
+                            r = ftp.retrbinary(f"RETR {file}", f.write)
 
                 # 파일 닫기
                 ftp.close()
@@ -130,7 +134,7 @@ class OpenCV():
                     return "6"    
 
                 else:
-                    sourceimage = cv2.imread("C:/CLOUDXPM-imageDetectAPI/API_Server/image/BaseImage/a.PNG", 0)
+                    sourceimage = cv2.imread("C:/CLOUDXPM-imageDetectAPI/API_Server/image/BaseImage/a.png", 0)
             
             if template == "http":
                 template = self.getUrlImage(detectImagePath)
@@ -163,12 +167,12 @@ class OpenCV():
             
             # 찾는이미지의 좌표값, 가중치 반환 메소드
             # 원본 이미지와 찾는 이미지의 매칭 위치탐색
-            # 행렬로 res에 값 저장
-            res = cv2.matchTemplate(sourceimage, template, method) 
+            # 행렬로 res에 값 저장  
+            res = cv2.matchTemplate(sourceimage, template, method)
 
             # 가장 비슷하지 않은 가중치, 비슷한 가중치, 가중치 낮은 왼쪽 위 모서리, 가중치 높은 왼쪽 위 모서리
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-
+            
             # 최댓값을 좌측 상단 좌표로 설정(x, y)
             top_left = max_loc
             
