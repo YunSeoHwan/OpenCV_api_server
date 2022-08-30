@@ -44,6 +44,10 @@ todo_fields_connect_error = Todo.model('Connect_error_output',{
     "ConnectionError": fields.String(description="Check your URL", example="Check your URL", required=True)
 })
 
+todo_fields_internal_error = Todo.model('Internal_error_output',{
+    "Error name": fields.String(description="Error message", example="Error message", required=True)
+})
+
 # swagger domain
 @Todo.route('')
 class TodoPost(Resource):
@@ -52,7 +56,8 @@ class TodoPost(Resource):
     @Todo.response(204, 'Value None', todo_fields_value_none)
     @Todo.response(400, 'URL Error', todo_fields_url_error)
     @Todo.response(404, 'Connect Error', todo_fields_connect_error)
-    @Todo.response(500, 'CV2 Error', todo_fields_cv2_error) 
-
+    @Todo.response(500, 'Internal Error', todo_fields_internal_error) 
+    # @Todo.response(501, 'Attribute Error', todo_fields_attribute_error)
+    # @Todo.response(502, )
     def post(self):
         """baseImgPath detectImgPath Center 좌표를 반환합니다."""

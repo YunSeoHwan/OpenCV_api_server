@@ -7,6 +7,7 @@ import numpy as np
 import re
 from flask_restx import Api
 from todo import Todo
+from config import *
 
 # Flask 객체 인스턴스
 app = Flask(__name__)
@@ -15,7 +16,7 @@ api = Api(
     app,
     title="OpenCV API Server",
     description="screenshotPath와 detectImagePath를 입력받아 detectImagePath image의 Center 좌표를 반환해줍니다.",
-    terms_url="http://127.0.0.1:5000/image-position",
+    terms_url="/",
     license="License : MIT"
 )
 
@@ -28,14 +29,24 @@ class OpenCV():
         # FTP 정규식
         ftp = re.compile('^(ftp://)')
 
-        # 사진, url 체크
-        if url.match(input) != None:
-            return "http"
-        
-        elif ftp.match(input) != None:
-            return "ftp"
-        else:
-            return "img"
+        # image 정규식
+        img = re.compile(".png$|.PNG$")
+
+        try:
+            # 사진, url, FTP 체크
+            if url.match(input) != None:
+                return "http"
+            
+            elif ftp.match(input) != None:
+                return "ftp"
+
+            elif len(img.findall(input)) != 0:
+                return "img"
+
+            else:
+                return "3"
+        except TypeError:
+            return "7"
 
     # FTP Server 다운 메소드
     def ftp_server_down(self, ftp_url):
@@ -71,8 +82,9 @@ class OpenCV():
 
                 for file in list:
                     if file == real_img:
-                        with open(r'C:\CLOUDXPM-imageDetectAPI\API_Server\image\BaseImage\{}'.format(file), 'wb') as f:
+                        with open(base_path + '{}'.format(file), 'wb') as f:
                             r = ftp.retrbinary(f"RETR {file}", f.write)
+                            return real_img
                 
                 # 파일 닫기
                 ftp.close()
@@ -84,8 +96,9 @@ class OpenCV():
                 list = ftp.nlst()
                 for file in list:
                     if file == real_img:
-                        with open(r'C:\CLOUDXPM-imageDetectAPI\API_Server\image\DetectImage\{}'.format(file), 'wb') as f:
+                        with open(detect_path + '{}'.format(file), 'wb') as f:
                             r = ftp.retrbinary(f"RETR {file}", f.write)
+                            return real_img
 
                 # 파일 닫기
                 ftp.close()
@@ -134,8 +147,13 @@ class OpenCV():
                     return "6"    
 
                 else:
-                    sourceimage = cv2.imread("C:/CLOUDXPM-imageDetectAPI/API_Server/image/BaseImage/a.png", 0)
+                    sourceimage = cv2.imread(base_path + "{}".format(f), 0)
+            elif sourceimage == "3":
+                return "3"
             
+            elif sourceimage == "7":
+                return "7"
+
             if template == "http":
                 template = self.getUrlImage(detectImagePath)
 
@@ -154,7 +172,13 @@ class OpenCV():
                     return "6"
 
                 else:
-                    template = cv2.imread("C:/CLOUDXPM-imageDetectAPI/API_Server/image/DetectImage/bb.PNG", 0)       
+                    template = cv2.imread(detect_path + "{}".format(f), 0)       
+
+            elif template == "3":
+                return "3"
+            
+            elif template == "7":
+                return "7"
 
             # 찾을 이미지의 가로, 세로 너비 할당
             # 흑백 이미지의 경우 height, width를 받아옴. color는 channel(BGR)값까지
@@ -226,9 +250,11 @@ def image_position():
     elif center == "6":
         return make_response(jsonify({'FTP_Path_Error' : 'Check your FTP_path'}), 500)
 
+    elif center == "7":
+        return make_response(jsonify({'TypeError' : 'Check your Path Type'}), 500)
+
     else:
         stats = "Success"
-    # 반환 형식
 
     # 정상처리 경우
     if type(center) is tuple:
